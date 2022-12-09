@@ -424,12 +424,12 @@
             };
 
             var overlayMaps = {
-                "A 15. Légierő bázisai": airfldDs,
-                "Repülőtér": tgAirfield,
-                "Ipari infrastruktúra": tgIndustry,
-                "Katonai létesítmény": tgMilitary,
-                "Bánya": tgMining,
-                "Vasúti infrastruktúra": tgRailway,
+                "A 15. Légierő bázisai": afclusters,
+                "Repülőtér": tgafclusters,
+                "Ipari infrastruktúra": indclusters,
+                "Katonai létesítmény": milclusters,
+                "Bánya": mineclusters,
+                "Vasúti infrastruktúra": rwclusters,
             };
 
             var layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map)
@@ -437,13 +437,7 @@
             //#endregion
 
             huDs.addTo(map);
-            bpDs.addTo(map);
-            tgAirfield.addTo(map);
-            tgIndustry.addTo(map);
-            tgMilitary.addTo(map);
-            tgMining.addTo(map);
-            tgRailway.addTo(map);
-            airfldDs.addTo(map);
+            bpDs.addTo(map);            
             desc.addTo(map);
             legend.addTo(map);
         }
