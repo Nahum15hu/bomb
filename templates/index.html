@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="hu">
+{% load static %} {% load leaflet_tags %}
+
+<head>
+    {% leaflet_js %} {% leaflet_css %}
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/dist/MarkerCluster.Default.css">
+    <link rel="stylesheet" href="../static/css/style.css">
+    <style type="text/css">
+        #gis {
+            width: auto;
+            height: calc(100vh - 17px);
+        }
+    </style>
+    <!--<script type="text/javascript" src="{% static 'dist/leaflet.ajax.js' }"></script>-->
+    <script type="text/javascript" src="../static/dist/leaflet.ajax.js"></script>
+    <script type="text/javascript" src="../static/dist/leaflet.markercluster.js"></script>
+    <title>Magyarország bombázása 1944-ben</title>
+</head>
+
+<body>
+    <script type="text/javascript">
+        function our_layers(map, options) {
+
+            //A 15. Légierő bázisai
+
+            // #region Légibázis
+
+
+            var airfldDs = new L.GeoJSON.AJAX("{% url 'airfields' %}", {
+                pointToLayer: function(feature, geom) {
+                    return L.circleMarker(geom, {
+                        fillColor: '#008080',
+                        color: '#537898',
+                        weight: 1,
+                        fillOpacity: 0.5,
+                    })
+                },
+                onEachFeature: function(feature, layer) {
+                    layer.bindPopup("<h2>" + feature.properties.airfieldName.toString() + "</h2>" +
+                        "<table><tr><td><b>Osztály:</b></td><td><a target='_blank' href='" + feature.properties.groupLink + "'>" + feature.properties.groupName.toString() + "</a></td></tr>" +
+                        "<tr><td><b>Repülőgép:</b></td><td>" + feature.properties.equipment.toString() + "</td></tr>" +
+                        "<tr><td><b>Ezred:</b></td><td><a target='_blank' href='" + feature.properties.airforceLink + "'>" + feature.properties.airforceName.toString() + "</a></td></tr>" +
+                        "<tr><td><b>Parancsnokság:</b></td><td>" + feature.properties.headQ.toString() + "</td></tr>" +
+                        "<tr><td><b>Parancsnok:</b></td><td>" + feature.properties.commander.toString() + "</td></tr></table>");
+                    layer.on("mouseover", function(e) {
+                        layer.setStyle({
+                            color: 'yellow'
+                        });
+                    });
+                    layer.on("mouseout", function(e) {
+                        layer.setStyle({
+                            color: '#537898',
+                        });
+                    });
+                },
+            });
+            var afclusters = L.markerClusterGroup({
+                showCoverageOnHover: false,
+            });
+            airfldDs.on('data:loaded', function() {
+                afclusters.addLayer(airfldDs);
+                afclusters.addTo(map);
+            });
+
+            // #endregion
+
+            // Bombázások célpontjai
+
+            // #region Célpontok
+
+            // #region Repülőtér
+
+            var tgAirfield = new L.GeoJSON.AJAX("{% url 'bombsites' %}", {
+                pointToLayer: function(feature, geom) {
+                    switch (feature.properties.targetEn) {
+                        case 'Airfield':
+                            return L.circleMarker(geom, {
+                                fillColor: '#02a0e3',
+                                color: '#60a7c4',
+                                weight: 1,
+                                fillOpacity: 0.5,
+                            })
+                    }
+                },
+                onEachFeature: function(feature, layer) {
+
+                    //Popup - Repülőtér
+
+                    // #region - Popup
+
+                    layer.bindPopup("<h2>" + feature.properties.place.toString() + "</h2>" +
+                        "<p>" + feature.properties.opDate.toString() + "</p>" +
+                        "<table><tr><td><b>Osztály:</b></td><td>" + feature.properties.groupName.toString() + "</td></tr>" +
+                        "<tr><td><b>Célpont:</b></td><td>" + feature.properties.target.toString() + "</td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opOrder + "'><b>Bevetési parancs</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opPhoto + "'><b>Bevetésen készült fénykép</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opReport + "'><b>Bevetési jelentés</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.targetPhoto + "'><b>Fénykép a bombázásról</b></a></td></tr></table>");
+
+                    // #endregion
+
+                    layer.on("mouseover", function(e) {
+                        layer.setStyle({
+                            color: 'yellow'
+                        });
+                    });
+                    layer.on("mouseout", function(e) {
+                        layer.setStyle({
+                            color: '#60a7c4'
+                        });
+                    });
+                },
+            });
+
+            var tgafclusters = L.markerClusterGroup({
+                showCoverageOnHover: false,
+            });
+            tgAirfield.on('data:loaded', function() {
+                tgafclusters.addLayer(tgAirfield);
+                tgafclusters.addTo(map);
+            });
+
+            // #endregion
+
+            // #region Ipari infrastruktúra
+
+            var tgIndustry = new L.GeoJSON.AJAX("{% url 'bombsites' %}", {
+                pointToLayer: function(feature, geom) {
+                    switch (feature.properties.targetEn) {
+                        case 'Industry':
+                            return L.circleMarker(geom, {
+                                fillColor: '#519681',
+                                color: '#72968b',
+                                weight: 1,
+                                fillOpacity: 0.5,
+                            })
+                    }
+                },
+                onEachFeature: function(feature, layer) {
+
+                    //Popup - Ipar
+
+                    // #region - Popup
+
+                    layer.bindPopup("<h2>" + feature.properties.place.toString() + "</h2>" +
+                        "<p>" + feature.properties.opDate.toString() + "</p>" +
+                        "<table><tr><td><b>Osztály:</b></td><td>" + feature.properties.groupName.toString() + "</td></tr>" +
+                        "<tr><td><b>Célpont:</b></td><td>" + feature.properties.target.toString() + "</td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opOrder + "'><b>Bevetési parancs</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opPhoto + "'><b>Bevetésen készült fénykép</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opReport + "'><b>Bevetési jelentés</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.targetPhoto + "'><b>Fénykép a bombázásról</b></a></td></tr></table>");
+
+                    // #endregion
+
+                    layer.on("mouseover", function(e) {
+                        layer.setStyle({
+                            color: 'yellow'
+                        });
+                    });
+                    layer.on("mouseout", function(e) {
+                        layer.setStyle({
+                            color: '#72968b'
+                        });
+                    });
+                },
+            });
+
+            var indclusters = L.markerClusterGroup({
+                showCoverageOnHover: false,
+            });
+            tgIndustry.on('data:loaded', function() {
+                indclusters.addLayer(tgIndustry);
+                indclusters.addTo(map);
+            });
+
+            // #endregion
+
+            // #region Katonai létesítmény
+
+            var tgMilitary = new L.GeoJSON.AJAX("{% url 'bombsites' %}", {
+                pointToLayer: function(feature, geom) {
+                    switch (feature.properties.targetEn) {
+                        case 'Military':
+                            return L.circleMarker(geom, {
+                                fillColor: '#b5ac7d',
+                                color: '#787046',
+                                weight: 1,
+                                fillOpacity: 0.5,
+                            })
+                    }
+                },
+                onEachFeature: function(feature, layer) {
+
+                    //Popup - Laktanya
+
+                    // #region - Popup
+
+                    layer.bindPopup("<h2>" + feature.properties.place.toString() + "</h2>" +
+                        "<p>" + feature.properties.opDate.toString() + "</p>" +
+                        "<table><tr><td><b>Osztály:</b></td><td>" + feature.properties.groupName.toString() + "</td></tr>" +
+                        "<tr><td><b>Célpont:</b></td><td>" + feature.properties.target.toString() + "</td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opOrder + "'><b>Bevetési parancs</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opPhoto + "'><b>Bevetésen készült fénykép</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opReport + "'><b>Bevetési jelentés</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.targetPhoto + "'><b>Fénykép a bombázásról</b></a></td></tr></table>");
+
+                    // #endregion
+
+                    layer.on("mouseover", function(e) {
+                        layer.setStyle({
+                            color: 'yellow'
+                        });
+                    });
+                    layer.on("mouseout", function(e) {
+                        layer.setStyle({
+                            color: '#787046'
+                        });
+                    });
+                },
+            });
+
+            var milclusters = L.markerClusterGroup({
+                showCoverageOnHover: false,
+            });
+            tgMilitary.on('data:loaded', function() {
+                milclusters.addLayer(tgMilitary);
+                milclusters.addTo(map);
+            });
+
+            // #endregion
+
+            // #region Bánya
+
+            var tgMining = new L.GeoJSON.AJAX("{% url 'bombsites' %}", {
+                pointToLayer: function(feature, geom) {
+                    switch (feature.properties.targetEn) {
+                        case 'Mining':
+                            return L.circleMarker(geom, {
+                                fillColor: '#9e7b5a',
+                                color: '#856f5b',
+                                weight: 1,
+                                fillOpacity: 0.5,
+                            })
+                    }
+                },
+                onEachFeature: function(feature, layer) {
+
+                    //Popup - Bánya
+
+                    // #region - Popup
+
+                    layer.bindPopup("<h2>" + feature.properties.place.toString() + "</h2>" +
+                        "<p>" + feature.properties.opDate.toString() + "</p>" +
+                        "<table><tr><td><b>Osztály:</b></td><td>" + feature.properties.groupName.toString() + "</td></tr>" +
+                        "<tr><td><b>Célpont:</b></td><td>" + feature.properties.target.toString() + "</td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opOrder + "'><b>Bevetési parancs</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opPhoto + "'><b>Bevetésen készült fénykép</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opReport + "'><b>Bevetési jelentés</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.targetPhoto + "'><b>Fénykép a bombázásról</b></a></td></tr></table>");
+
+                    // #endregion
+
+                    layer.on("mouseover", function(e) {
+                        layer.setStyle({
+                            color: 'yellow'
+                        });
+                    });
+                    layer.on("mouseout", function(e) {
+                        layer.setStyle({
+                            color: '#856f5b'
+                        });
+                    });
+                },
+            });
+            var mineclusters = L.markerClusterGroup({
+                showCoverageOnHover: false,
+            });
+            tgMining.on('data:loaded', function() {
+                mineclusters.addLayer(tgMining);
+                mineclusters.addTo(map);
+            });
+
+            // #endregion
+
+            // #region Vasúti infrastruktúra
+
+            var tgRailway = new L.GeoJSON.AJAX("{% url 'bombsites' %}", {
+                pointToLayer: function(feature, geom) {
+                    switch (feature.properties.targetEn) {
+                        case 'Railway':
+                            return L.circleMarker(geom, {
+                                fillColor: '#a6ab52',
+                                color: '#7e8238',
+                                weight: 1,
+                                fillOpacity: 0.5,
+                            })
+                    }
+                },
+                onEachFeature: function(feature, layer) {
+
+                    //Popup - Vasút
+
+                    // #region - Popup
+
+                    layer.bindPopup("<h2>" + feature.properties.place.toString() + "</h2>" +
+                        "<p>" + feature.properties.opDate.toString() + "</p>" +
+                        "<table><tr><td><b>Osztály:</b></td><td>" + feature.properties.groupName.toString() + "</td></tr>" +
+                        "<tr><td><b>Célpont:</b></td><td>" + feature.properties.target.toString() + "</td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opOrder + "'><b>Bevetési parancs</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opPhoto + "'><b>Bevetésen készült fénykép</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.opReport + "'><b>Bevetési jelentés</b></a></td></tr>" +
+                        "<tr><td><a target='_blank' href='" + feature.properties.targetPhoto + "'><b>Fénykép a bombázásról</b></a></td></tr></table>");
+
+                    // #endregion
+
+
+                    layer.on("mouseover", function(e) {
+                        layer.setStyle({
+                            color: 'yellow'
+                        });
+                    });
+                    layer.on("mouseout", function(e) {
+                        layer.setStyle({
+                            color: '#7e8238'
+                        });
+                    });
+                },
+            });
+
+            var rwclusters = L.markerClusterGroup({
+                showCoverageOnHover: false,
+            });
+            tgRailway.on('data:loaded', function() {
+                rwclusters.addLayer(tgRailway);
+                rwclusters.addTo(map);
+            });
+
+            // #endregion
+
+            // #endregion
+
+            // Alaprétegek
+
+            // #region Határ rétegek
+
+            var bpDs = new L.GeoJSON.AJAX("{% url 'budapest' %}", {
+                style: function(feature) {
+                    return {
+                        fillColor: '#06b300',
+                        fillOpacity: 0,
+                        color: '#000000',
+                        weight: 3,
+                        dashArray: '10 5 2 5 10 5',
+                    }
+                }
+            });
+
+            var huDs = new L.GeoJSON.AJAX("{% url 'hungary'%}", {
+                style: function(feature) {
+                    return {
+                        fillColor: '#000000',
+                        fillOpacity: 0,
+                        color: '#000000',
+                        weight: 3,
+                        dashArray: '20 10 5 10 20 5',
+                    }
+                }
+            })
+
+            // #endregion
+
+            let desc = L.control({
+                position: "bottomleft"
+            });
+            desc.onAdd = function() {
+                let div = L.DomUtil.create("div", "desc");
+                div.innerHTML =
+                    '<h2>Magyarország bombázása 1944-ben</h2><hr>' +
+                    'A térkép az <b>1944. április és 1944. december</b> közötti időszakban,' +
+                    'az <b> Amerikai Egyesült államok 15. Légierejének </b> bombatámadásait ábrázolja. ' +
+                    'A térképen megjelenik <b>Magyaroszág</b> határa és <b>Budapest</b> belterületének határa a 2. Világháború idején.<hr>' +
+                    'A térképen látható ikonokra <b>kattinva</b>, egy felugró szövegdobozban megjelennek az elemhez tartozó infomrációk.';
+                return div;
+            };
+
+            let legend = L.control({
+                position: "topright"
+            });
+            legend.onAdd = function() {
+                let div = L.DomUtil.create("div", "legend");
+                div.innerHTML =
+                    '<b>Jelmagyarázat</b><br>' +
+                    '15. Légierő<br>' +
+                    '<div style="background-color: #008080"></div>Légibázis<br><hr>' +
+                    'Bombatámadások<br>' +
+                    '<div style="background-color: #02a0e3"></div><div>Repülőtér</div><br>' +
+                    '<div style="background-color: #519681"></div><div>Ipar</div><br>' +
+                    '<div style="background-color: #b5ac7d"></div><div>Laktanya</div><br>' +
+                    '<div style="background-color: #9e7b5a"></div><div>Bánya</div><br>' +
+                    '<div style="background-color: #a6ab52"></div><div>Vasút</div><br>';
+                return div;
+            };
+
+
+            // #region Rétegkezelő
+
+            var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                'attribution': '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                'maxZoom': 19
+            }).addTo(map)
+            var imagery = L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                'attribution': 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                'maxZoom': 19
+            }).addTo(map)
+
+            var baseMaps = {
+                "Satellite": imagery,
+                "OpenStreetMap": osm,
+            };
+
+            var overlayMaps = {
+                "A 15. Légierő bázisai": airfldDs,
+                "Repülőtér": tgAirfield,
+                "Ipari infrastruktúra": tgIndustry,
+                "Katonai létesítmény": tgMilitary,
+                "Bánya": tgMining,
+                "Vasúti infrastruktúra": tgRailway,
+            };
+
+            var layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map)
+
+            //#endregion
+
+            huDs.addTo(map);
+            bpDs.addTo(map);
+            tgAirfield.addTo(map);
+            tgIndustry.addTo(map);
+            tgMilitary.addTo(map);
+            tgMining.addTo(map);
+            tgRailway.addTo(map);
+            airfldDs.addTo(map);
+            desc.addTo(map);
+            legend.addTo(map);
+        }
+    </script>
+
+    {% leaflet_map "gis" callback="window.our_layers" %}
+
+</body>
+
+</html>
