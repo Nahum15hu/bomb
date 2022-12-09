@@ -1,0 +1,5 @@
+Django==4.1.4
+django-geojson==4.0.0
+django-leaflet==0.28.3
+geojson==2.5.0
+psycopg2==2.9.5
